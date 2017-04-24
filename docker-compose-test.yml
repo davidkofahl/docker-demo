@@ -24,7 +24,7 @@ services:
       - vip:/var/www/html
 
   nginx:
-    image: nginx:mainline
+    image: nginx:latest
     environment:
       NGINX_PORT: "80"
     ports:
