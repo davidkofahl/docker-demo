@@ -1,0 +1,53 @@
+# time.com plugins need to be 36G
+version: '3'
+services:
+
+  wp:
+    build:
+      context: .docker/wp
+      dockerfile: Dockerfile
+    ports:
+      - "9000:9000"
+    env_file: .docker/wp/local.env
+    depends_on:
+      - mysql
+      - vip 
+    volumes: 
+      - wp:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - vip:/var/www/html/wp-content/mu-plugins
+
+  vip:
+    build:
+      context: .docker/vip
+      dockerfile: Dockerfile
+    volumes:
+      - vip:/usr/src
+
+  nginx:
+    image: nginx:mainline
+    environment:
+      NGINX_PORT: "80"
+    ports:
+      - "80:80"
+    depends_on:
+      - wp
+      - vip
+    volumes: 
+      - wp:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - vip:/var/www/html/wp-content/mu-plugins
+      - .docker/nginx/wordpress.conf:/etc/nginx/conf.d/wordpress.template
+    command: /bin/bash -c "envsubst '$$NGINX_PORT' < /etc/nginx/conf.d/wordpress.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
+
+  mysql:
+    image: mariadb
+    volumes:
+      - data:/var/lib/mysql
+    env_file: .docker/mysql/local.env
+
+volumes: 
+  data:
+  wp: 
+  vip:
+
